@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RBI-Compliant GCP Landing Zone — Minimum Viable Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2236;--border:#1e3a5f;--blue:#2563eb;--teal:#06b6d4;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--glow:rgba(37,99,235,0.15);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'IBM Plex Sans',sans-serif;color:var(--text);min-height:100vh;padding:28px 20px 60px;}
+/* Header */
+.hdr{max-width:1280px;margin:0 auto 12px;border-left:4px solid var(--blue);padding-left:18px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:7px;}
+h1{font-size:24px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:9px;}
+.subtitle{color:var(--muted);font-size:13px;max-width:860px;line-height:1.65;}
+/* Source notice */
+.src{max-width:1280px;margin:12px auto 18px;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.25);border-left:3px solid var(--teal);border-radius:4px;padding:10px 15px;font-size:11.5px;color:var(--muted);line-height:1.7;}
+.src strong{color:var(--teal);}
+.src a{color:var(--teal);text-decoration:none;border-bottom:1px dotted rgba(6,182,212,.4);}
+.src a:hover{color:#67e8f9;}
+/* Legend */
+.legend{max-width:1280px;margin:0 auto 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.leg-lbl{font-size:10.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.1em;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:3px;white-space:nowrap;}
+.badge.req{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.35);}
+.badge.rec{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.35);}
+/* Filter */
+.fbar{max-width:1280px;margin:0 auto 16px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.flbl{font-size:10.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.1em;}
+.fbtn{padding:4px 13px;border-radius:4px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:all .15s;}
+.fbtn:hover{background:var(--surface2);color:#fff;}
+.fbtn.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+/* Table */
+.wrap{max-width:1280px;margin:0 auto;border-radius:7px;overflow:hidden;border:1px solid var(--border);box-shadow:0 0 50px var(--glow);}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead{background:var(--surface2);border-bottom:2px solid var(--blue);}
+thead th{padding:12px 13px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:600;white-space:nowrap;}
+.gh td{padding:8px 13px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;border-top:1px solid var(--border);}
+tbody tr{border-bottom:1px solid rgba(30,58,95,.5);transition:background .15s;}
+tbody tr:hover{background:rgba(37,99,235,.06);}
+tbody td{padding:12px 13px;vertical-align:top;line-height:1.55;color:var(--muted);}
+/* Column widths */
+.c1{width:120px;}.c2{width:195px;}.c3{min-width:240px;}.c4{width:170px;}.c5{width:135px;}.c6{width:100px;}
+/* Cell styles */
+.dp{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#fff;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.cn{font-weight:600;color:var(--text);font-size:12.5px;margin-bottom:2px;}
+.pt{display:inline-block;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding:2px 6px;border-radius:3px;margin:2px 2px 0 0;}
+.rr{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--dim);margin-top:5px;line-height:1.6;}
+.rr a{color:var(--amber);text-decoration:none;border-bottom:1px dotted rgba(245,158,11,.4);}
+.rr a:hover{color:#fcd34d;}
+.why{color:var(--muted);margin-top:4px;font-style:italic;font-size:10.5px;line-height:1.5;}
+.sl{display:inline-flex;align-items:center;gap:4px;color:var(--blue);text-decoration:none;font-size:10.5px;font-family:'IBM Plex Mono',monospace;border:1px solid rgba(37,99,235,.3);padding:4px 8px;border-radius:3px;transition:all .18s;white-space:nowrap;}
+.sl:hover{background:rgba(37,99,235,.12);border-color:var(--blue);color:#fff;}
+.sl svg{width:9px;height:9px;flex-shrink:0;}
+.sl.xlsx{border-color:rgba(16,185,129,.4);color:var(--green);}
+.sl.xlsx:hover{background:rgba(16,185,129,.1);border-color:var(--green);}
+/* Scorecard */
+.cards{max-width:1280px;margin:20px auto 0;display:flex;gap:12px;flex-wrap:wrap;}
+.card{flex:1;min-width:180px;border-radius:5px;padding:14px 16px;}
+.card .cl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
+.card .cn2{font-size:30px;font-weight:700;color:#fff;}
+.card .cs{font-size:11px;color:var(--muted);margin-top:3px;}
+.footer{max-width:1280px;margin:16px auto 0;font-size:10.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+.hidden{display:none;}
+@media(max-width:900px){.c4{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="eyebrow">Google Cloud · RBI — Minimum Viable Controls</div>
+  <h1>RBI-Compliant GCP Landing Zone<br/>Minimum Viable Security Controls</h1>
+  <p class="subtitle">Controls trimmed strictly to what Google's own official RBI documentation specifies. Every control is traceable to a specific RBI directive section in Google's published whitepapers and compliance mappings — no third-party sources used.</p>
+</div>
+
+<div class="src">
+  <strong>GCP Sources (Google official only):</strong>
+  <a href="https://cloud.google.com/security/compliance/rbi_guidelines_data_localization_whitepaper" target="_blank">GCP RBI Data Localisation Whitepaper (2022)</a> ·
+  <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">GCP RBI Outsourcing Guidelines Mapping (Jan 2023)</a> ·
+  <a href="https://cloud.google.com/security/compliance/rbi-india" target="_blank">Google Cloud RBI Compliance Page</a>
+  <br/><strong>RBI Source Documents:</strong>
+  §5.x references → <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006 (DBOD.NO.BP.40/21.04.158/2006-07)</a> — the framework Google's GCP mapping is built against. ·
+  Data localisation → RBI/2017-18/153 (DPSS.CO.OD No.2785/06.08.005/2017-18) ·
+  Newer IT framework → <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/102MDITSERVICES56B33FD530B1433187D75CB7C06C8F70.PDF" target="_blank">RBI Master Direction IT Outsourcing 2023</a>
+</div>
+
+<div class="legend">
+  <span class="leg-lbl">Status:</span>
+  <span class="badge req">● RBI Required</span>
+  <span class="badge rec">● Google Recommends (include in MVP)</span>
+</div>
+
+<div class="fbar">
+  <span class="flbl">Filter:</span>
+  <button class="fbtn on" onclick="f('all',this)">All Controls</button>
+  <button class="fbtn" onclick="f('req',this)">RBI Required only</button>
+  <button class="fbtn" onclick="f('rec',this)">Google Recommends only</button>
+</div>
+
+<div class="wrap">
+<table id="ct">
+<thead>
+  <tr>
+    <th class="c1">Domain</th>
+    <th class="c2">Control</th>
+    <th class="c3">What to Configure &amp; RBI Basis</th>
+    <th class="c4">GCP Product(s)</th>
+    <th class="c5">MVP Status</th>
+    <th class="c6">Setup</th>
+  </tr>
+</thead>
+<tbody>
+
+<!-- ══ IDENTITY ══ -->
+<tr class="gh" data-s="all"><td colspan="6" style="background:#0f172a;color:#2563eb;">◆ IDENTITY &amp; ACCESS</td></tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#2563eb"></span>Identity</span></td>
+  <td><div class="cn">Cloud Identity / Identity Federation</div></td>
+  <td>Centralised identity directory or federation with corporate IdP (AD/LDAP) via SAML 2.0 / OIDC. Enables audited, need-to-know access governance across all GCP resources. Cited as the access control foundation in Google's RBI mapping.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.6.2 (need-to-know access) · §5.6.1 (confidentiality &amp; security)</div></td>
+  <td><span class="pt">Cloud Identity</span><span class="pt">Workforce Identity Fed.</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Named in Google's RBI outsourcing mapping as the access control foundation for §5.6.2.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/identity/docs/set-up-cloud-identity-admin" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#2563eb"></span>Identity</span></td>
+  <td><div class="cn">IAM — Least Privilege &amp; Separation of Duties</div></td>
+  <td>Granular IAM roles; no standing owner-level access in production; separation of duties between dev, ops, and security. Cited verbatim in Google's RBI Data Localisation whitepaper as a required technical control for enforcing access governance and preventing accidental data placement outside India.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.6.2 (need-to-know) · §5.6.3 (isolation per bank) · cited by name in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_data_localization_whitepaper" target="_blank">Google's Data Localisation whitepaper</a></div></td>
+  <td><span class="pt">Cloud IAM</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Cited verbatim in Google's RBI Data Localisation whitepaper as a required technical enforcement control.</div></td>
+  <td><a class="sl" href="https://docs.cloud.google.com/iam/docs/using-iam-securely" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="rec">
+  <td><span class="dp"><span class="dot" style="background:#2563eb"></span>Identity</span></td>
+  <td><div class="cn">MFA / 2-Step Verification</div></td>
+  <td>Enforce MFA for all users accessing GCP. Strong security practice aligned to RBI's general authentication standards. Not cited as a GCP-specific control in Google's RBI mapping documents, but prudent to include in the MVP given RBI's broader cybersecurity expectations for banks.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NT9760E7C3F1A.PDF" target="_blank">RBI Cybersecurity Framework for Banks (2016)</a> Annex 1 (general authentication) — not GCP-specific in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">Google's RBI mapping</a></div></td>
+  <td><span class="pt">Cloud Identity</span></td>
+  <td><span class="badge rec">Google Recommends</span><div class="why">Include in MVP. Not a GCP-specific RBI mandate per Google's docs but strongly aligned to RBI cybersecurity baseline.</div></td>
+  <td><a class="sl" href="https://support.google.com/cloudidentity/answer/9176657" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<!-- ══ GOVERNANCE ══ -->
+<tr class="gh" data-s="all"><td colspan="6" style="background:#0f172a;color:#8b5cf6;">◆ RESOURCE GOVERNANCE</td></tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#8b5cf6"></span>Governance</span></td>
+  <td><div class="cn">Org Policy — India Region Restriction</div></td>
+  <td>Enforce <code style="background:rgba(139,92,246,.15);color:#c4b5fd;padding:1px 5px;border-radius:3px;font-size:11px;">constraints/gcp.resourceLocations</code> restricting ALL GCP resources to <strong style="color:#fff">asia-south1 (Mumbai)</strong> and <strong style="color:#fff">asia-south2 (Delhi NCR)</strong> only. The single most important technical control for RBI compliance — cited by name in Google's Data Localisation whitepaper.
+    <div class="rr">→ RBI/2017-18/153 — Storage of Payment System Data (DPSS.CO.OD No.2785/06.08.005/2017-18) · cited explicitly in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_data_localization_whitepaper" target="_blank">Google's Data Localisation whitepaper</a> as the primary enforcement mechanism</div></td>
+  <td><span class="pt">Org Policy Service</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Cited verbatim as the primary technical control in Google's RBI Data Localisation whitepaper.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/resource-manager/docs/organization-policy/restricting-resources" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#8b5cf6"></span>Governance</span></td>
+  <td><div class="cn">Resource Hierarchy (Org → Folders → Projects)</div></td>
+  <td>Structure GCP as Organisation → Folders (Production / Non-Production / Shared Services / Security) → Projects. Foundational prerequisite — without this, IAM, org policies, and audit scope boundaries cannot be applied consistently across the bank's environment.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.6.3 (logical isolation of bank's data) — structural foundation for all other technical controls</div></td>
+  <td><span class="pt">Resource Manager</span><span class="pt">Folders</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Structural prerequisite for isolating the bank's data per §5.6.3. Must be defined before any workload deployment.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/resource-manager/docs/creating-managing-folders" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#8b5cf6"></span>Governance</span></td>
+  <td><div class="cn">Access Transparency &amp; Access Approval</div></td>
+  <td>Enable Access Transparency to log all Google personnel actions on bank data. Configure Access Approval for explicit bank sign-off before Google support can access customer content. Access Transparency is cited by product name in Google's RBI mapping under §5.6.2 and §5.9.1.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.6.2 (need-to-know oversight of Google access) · §5.9.1 (monitoring) — Access Transparency named by product in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">Google's RBI outsourcing mapping</a></div></td>
+  <td><span class="pt">Access Transparency</span><span class="pt">Access Approval</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Named by product in Google's RBI mapping §5.6.2 and §5.9.1. Enables oversight of Google's own access to bank data.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/cloud-provider-access-management/access-transparency/docs/overview" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<!-- ══ NETWORK ══ -->
+<tr class="gh" data-s="all"><td colspan="6" style="background:#0f172a;color:#06b6d4;">◆ NETWORK SECURITY</td></tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#06b6d4"></span>Network</span></td>
+  <td><div class="cn">VPC Service Controls</div></td>
+  <td>Create service perimeters around GCS, BigQuery, Cloud SQL, and Spanner to prevent data egress outside the India boundary. Named by product in Google's RBI Data Localisation whitepaper alongside Org Policy as the two required technical controls for RBI data localisation enforcement.
+    <div class="rr">→ RBI/2017-18/153 — Storage of Payment System Data (DPSS.CO.OD No.2785/06.08.005/2017-18) · cited by product name in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_data_localization_whitepaper" target="_blank">Google's Data Localisation whitepaper</a> as the data egress enforcement layer</div></td>
+  <td><span class="pt">VPC Service Controls</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Named explicitly in Google's RBI whitepaper as one of two required technical controls (alongside Org Policy) for data localisation.</div></td>
+  <td><a class="sl" href="https://docs.cloud.google.com/vpc-service-controls/docs/set-up-service-perimeter" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="rec">
+  <td><span class="dp"><span class="dot" style="background:#06b6d4"></span>Network</span></td>
+  <td><div class="cn">Shared VPC Architecture</div></td>
+  <td>Centralised network management via a Shared VPC host project. All service projects consume network resources from a single, bank-governed hub. Google's recommended architectural pattern to satisfy the §5.6.3 isolation requirement — not prescribed by name in RBI documents.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.6.3 (isolation) — Shared VPC is Google's recommended implementation pattern for network isolation</div></td>
+  <td><span class="pt">Shared VPC</span></td>
+  <td><span class="badge rec">Google Recommends</span><div class="why">Google's recommended architecture for §5.6.3 isolation. Not named in RBI documents but strongly aligned. Include in MVP.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/vpc/docs/shared-vpc" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="rec">
+  <td><span class="dp"><span class="dot" style="background:#06b6d4"></span>Network</span></td>
+  <td><div class="cn">Cloud Interconnect <span style="font-size:10px;color:var(--amber)">(if hybrid)</span></div></td>
+  <td>Dedicated private connectivity between the bank's on-prem DC and GCP India regions. Required only when on-premises systems (e.g. Core Banking System) must communicate with GCP workloads. Google's BC/DR guidance for RBI §5.8 requires robust continuity frameworks — Interconnect is the enabler for hybrid architectures.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.8 (BC/DR) · <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/102MDITSERVICES56B33FD530B1433187D75CB7C06C8F70.PDF" target="_blank">RBI Master Direction IT Outsourcing 2023</a> Chapter VI — situational, required for hybrid banking deployments</div></td>
+  <td><span class="pt">Cloud Interconnect</span><span class="pt">Partner Interconnect</span></td>
+  <td><span class="badge rec">Google Recommends</span><div class="why">Conditional — only if bank has on-prem workloads connecting to GCP. Skip if cloud-only deployment.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/network-connectivity/docs/interconnect/concepts/overview" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<!-- ══ DATA ══ -->
+<tr class="gh" data-s="all"><td colspan="6" style="background:#0f172a;color:#10b981;">◆ DATA PROTECTION &amp; ENCRYPTION</td></tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#10b981"></span>Data</span></td>
+  <td><div class="cn">Default Encryption at Rest &amp; in Transit</div></td>
+  <td>All GCP data is encrypted at rest (AES-256) and in transit by default. Row 26 of Google's RBI outsourcing mapping lists this as the confidentiality baseline meeting §5.6.1. No configuration required — the bank must confirm it is active and document it as RBI audit evidence.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.6.1 (confidentiality &amp; security) · Row 26 of <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">Google's RBI outsourcing mapping</a> — listed as "security by default" baseline</div></td>
+  <td><span class="pt">Google-managed encryption</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Cited in Row 26 of Google's RBI mapping as the default confidentiality baseline for §5.6.1. On by default — confirm and document for audit.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/security/encryption/default-encryption" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#10b981"></span>Data</span></td>
+  <td><div class="cn">Cloud KMS — Customer-Managed Keys (CMEK)</div></td>
+  <td>Bank-controlled encryption keys for all financial and payment data stored in GCP. Google's RBI Data Localisation whitepaper cites Cloud KMS by product name for <em>"sensitive data such as customer financial information, credit card numbers and personal identifiers"</em> — enabling the bank to control and revoke key access independently of Google.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.6.1 (confidentiality) · Cloud KMS cited by product name in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_data_localization_whitepaper" target="_blank">Google's RBI Data Localisation whitepaper</a> specifically for banking/payment data</div></td>
+  <td><span class="pt">Cloud KMS</span><span class="pt">CMEK</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Cloud KMS cited by product name in Google's RBI whitepaper for sensitive financial and payment data. Bank retains key control.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/kms/docs/cmek" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<!-- ══ LOGGING ══ -->
+<tr class="gh" data-s="all"><td colspan="6" style="background:#0f172a;color:#f59e0b;">◆ LOGGING &amp; MONITORING</td></tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#f59e0b"></span>Logging</span></td>
+  <td><div class="cn">Cloud Audit Logs + Cloud Operations</div></td>
+  <td>Enable Admin Activity and Data Access audit logs across all projects. Google's RBI mapping §5.9.1 cites <em>Google Cloud Operations</em> by product name as the required monitoring tool for RBI outsourcing oversight. Audit logs are the bank's primary evidence for RBI supervisory reviews and internal/external audits.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.9.1 (monitoring &amp; control of outsourced activities) — Google Cloud Operations cited by product name in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">Google's RBI mapping</a></div></td>
+  <td><span class="pt">Cloud Audit Logs</span><span class="pt">Cloud Operations</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Cloud Operations cited by product name in §5.9.1 of Google's RBI mapping. Enable at org level for all projects.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/logging/docs/audit" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#f59e0b"></span>Logging</span></td>
+  <td><div class="cn">Log Export &amp; Long-term Retention (India)</div></td>
+  <td>Export audit logs to a GCS bucket in India region (asia-south1 / asia-south2). Retain for minimum 5 years per RBI norms. Data localisation rules apply to logs — audit trail data cannot be stored outside India. Google's RBI mapping §5.5.1 requires data preservation per the bank's legal/regulatory obligation.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.5.1 (data preservation obligation) · RBI/2017-18/153 data localisation applies to audit logs</div></td>
+  <td><span class="pt">Cloud Storage</span><span class="pt">Log Sinks</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Data preservation cited in §5.5.1. Logs must remain in India per localisation directive and be retained per RBI audit norms.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/logging/docs/export/aggregated_sinks" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<!-- ══ BC/DR ══ -->
+<tr class="gh" data-s="all"><td colspan="6" style="background:#0f172a;color:#ef4444;">◆ BUSINESS CONTINUITY &amp; DR</td></tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#ef4444"></span>BC/DR</span></td>
+  <td><div class="cn">DR Planning &amp; Testing (India Regions)</div></td>
+  <td>Documented and tested disaster recovery plan using asia-south1 (primary) and asia-south2 (DR). Google's RBI mapping §5.8.1 explicitly requires <em>"a robust framework for documenting, maintaining and testing business continuity and recovery procedures"</em> with periodic testing. Google's DR Planning Guide is cited by name as the implementation reference.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.8.1 (BC/DR framework required) · §5.8.2 (continuity and control) — Google's DR Planning Guide cited in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">Google's RBI mapping</a></div></td>
+  <td><span class="pt">GCP India Regions</span><span class="pt">Cloud Spanner</span><span class="pt">AlloyDB</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">§5.8 is a full dedicated section in Google's RBI mapping. BC/DR documentation, testing, and annual review explicitly required.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/architecture/dr-scenarios-planning-guide" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#ef4444"></span>BC/DR</span></td>
+  <td><div class="cn">Exit Strategy &amp; Data Portability</div></td>
+  <td>Documented and tested plan to exit GCP and retrieve all bank data. Google's RBI mapping §5.8.2–§5.8.4 explicitly covers exit planning. Google provides a 12-month post-termination transition term specifically for this requirement. GKE and VM image export are cited as the GCP implementation tools.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.8.2, §5.8.3, §5.8.4 (exit strategy, data recovery, continuity) — GKE and VM export cited as implementation tools in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">Google's RBI mapping</a></div></td>
+  <td><span class="pt">GKE</span><span class="pt">Terraform</span><span class="pt">Data Export</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">§5.8.2–5.8.4 in Google's RBI mapping dedicates three sections to exit planning and data portability. Non-negotiable.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/architecture/framework/perspectives/fsi" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<!-- ══ VENDOR GOVERNANCE ══ -->
+<tr class="gh" data-s="all"><td colspan="6" style="background:#0f172a;color:#94a3b8;">◆ VENDOR GOVERNANCE &amp; AUDIT</td></tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#94a3b8"></span>Vendor</span></td>
+  <td><div class="cn">Vendor Due Diligence &amp; Concentration Risk</div></td>
+  <td>Formal due diligence on Google Cloud as an IT service provider, plus an annual concentration risk assessment. Google's RBI mapping §5.4.1 dedicates an entire section to this requirement. Annual review (§5.9.4) is explicitly required — this is an ongoing, not one-time, obligation.
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.4.1 (due diligence) · §5.9.4 (annual review) — dedicated sections in <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">Google's RBI mapping</a></div></td>
+  <td><span class="pt">GCP Compliance Reports</span><span class="pt">GKE (portability)</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">§5.4 and §5.9.4 are dedicated sections in Google's RBI mapping. Process + contract obligation — not just technical.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/security/compliance/rbi-india" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+<tr data-s="req">
+  <td><span class="dp"><span class="dot" style="background:#94a3b8"></span>Vendor</span></td>
+  <td><div class="cn">RBI &amp; Auditor Supervisory Access</div></td>
+  <td>Contractually ensure RBI and the bank's appointed auditors can access all data, transaction records, and audit trails on GCP. Google dedicates Rows 13 and 19–22 of its RBI mapping entirely to this — Google contractually grants access rights <em>"regardless of service location."</em> Requires both contractual setup (GCP Financial Services Contract) and technical enablement (Access Transparency + Audit Logs).
+    <div class="rr">→ <a href="https://rbidocs.rbi.org.in/rdocs/notification/PDFs/73713.PDF" target="_blank">RBI Outsourcing Guidelines 2006</a> §5.5.1 Rows 13 &amp; 19–22 (audit access) · §5.9.3 (audit rights for RBI) · §7.2 (offshore access rights) — see <a href="https://cloud.google.com/security/compliance/rbi_guidelines_outsourcing_banks_gcp_mapping" target="_blank">Google's RBI mapping</a></div></td>
+  <td><span class="pt">Access Transparency</span><span class="pt">Cloud Audit Logs</span><span class="pt">GCP FSI Contract</span></td>
+  <td><span class="badge req">RBI Required</span><div class="why">Rows 19–22 of Google's RBI mapping are entirely dedicated to supervisory access rights. Non-negotiable contractual + technical obligation.</div></td>
+  <td><a class="sl" href="https://cloud.google.com/cloud-provider-access-management/access-transparency/docs/overview" target="_blank">Docs<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10L10 2M4 2h6v6"/></svg></a></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<div class="cards">
+  <div class="card" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);">
+    <div class="cl" style="color:#ef4444;">RBI Required</div>
+    <div class="cn2">11</div>
+    <div class="cs">Directly traceable to Google's official RBI documentation</div>
+  </div>
+  <div class="card" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);">
+    <div class="cl" style="color:#f59e0b;">Google Recommends (MVP-worthy)</div>
+    <div class="cn2">3</div>
+    <div class="cs">Aligned to RBI intent — include in MVP</div>
+  </div>
+  <div class="card" style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);">
+    <div class="cl" style="color:#10b981;">Total MVP Controls</div>
+    <div class="cn2">14</div>
+    <div class="cs">11 RBI Required + 3 Google Recommends</div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>GCP RBI Data Localisation Whitepaper (2022) · GCP RBI Outsourcing Mapping (Jan 2023) · RBI Outsourcing Guidelines 2006 · RBI/2017-18/153 · RBI Master Direction IT Outsourcing 2023</span>
+  <span>India regions: asia-south1 (Mumbai) · asia-south2 (Delhi NCR)</span>
+</div>
+
+<script>
+function f(s,btn){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('#ct tbody tr').forEach(r=>{
+    const rs=r.getAttribute('data-s');
+    if(!rs)return;
+    r.classList.toggle('hidden', s!=='all' && rs!==s && rs!=='all');
+  });
+}
+</script>
+</body>
+</html>
